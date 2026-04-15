@@ -9,10 +9,10 @@ Full end-to-end deployment for the live demo:
 
 ```
 Browser
-  │  HTTPS  →  thedysko.ai
+  │  HTTPS  →  archstudio.thedysko.ai
   ▼
 Cloud Run — Next.js frontend
-  │  HTTPS  →  api.thedysko.ai
+  │  HTTPS  →  api-archstudio.thedysko.ai
   ▼
 Cloud Run — FastAPI backend  (ADC, no API key)
   │  ├─ /refine   → Vertex AI Gemini
@@ -60,6 +60,8 @@ export GCP_LOCATION=us-central1
 export REFINER_MODEL=your-refiner-model
 export ROUTER_MODEL=your-router-model
 export ARCHITECT_MODEL=your-architect-model
+export FRONTEND_DOMAIN=archstudio.thedysko.ai
+export API_DOMAIN=api-archstudio.thedysko.ai
 gcloud config set project "$GCP_PROJECT"
 gcloud auth application-default set-quota-project "$GCP_PROJECT"
 
@@ -160,7 +162,7 @@ The script sets the production Vertex AI env vars required by ADK:
 ```bash
 gcloud beta run domain-mappings create \
   --service intentiv-backend \
-  --domain api.thedysko.ai \
+  --domain api-archstudio.thedysko.ai \
   --region us-central1
 ```
 
@@ -168,7 +170,7 @@ Follow the DNS instructions printed by the command (add a CNAME or A record to y
 
 **Verify:**
 ```bash
-curl https://api.thedysko.ai/health
+curl https://api-archstudio.thedysko.ai/health
 # → {"status":"ok","version":"3.0.0"}
 ```
 
@@ -177,7 +179,7 @@ curl https://api.thedysko.ai/health
 ## Step 5 — Deploy the Frontend (Cloud Run)
 
 `NEXT_PUBLIC_API_URL` is baked into the JS bundle at build time, so the backend
-must be live at `api.thedysko.ai` **before** building the frontend image.
+must be live at `api-archstudio.thedysko.ai` **before** building the frontend image.
 
 ```bash
 chmod +x deploy/cloud-run/deploy-frontend.sh
@@ -194,7 +196,7 @@ NEXT_PUBLIC_API_URL=https://your-api-domain ./deploy/cloud-run/deploy-frontend.s
 ```bash
 gcloud beta run domain-mappings create \
   --service intentiv-frontend \
-  --domain thedysko.ai \
+  --domain archstudio.thedysko.ai \
   --region us-central1
 ```
 
@@ -206,20 +208,20 @@ Add the DNS record from the output to your DNS provider.
 
 ```bash
 # 1. Backend health
-curl https://api.thedysko.ai/health
+curl https://api-archstudio.thedysko.ai/health
 
 # 2. Refine endpoint (Phase 1)
-curl -s -X POST https://api.thedysko.ai/refine \
+curl -s -X POST https://api-archstudio.thedysko.ai/refine \
   -H "Content-Type: application/json" \
   -d '{"rough_input": "customer support chatbot with memory"}' | jq .
 
 # 3. Generate endpoint (Phase 2 — calls Agent Engine)
-curl -s -X POST https://api.thedysko.ai/generate \
+curl -s -X POST https://api-archstudio.thedysko.ai/generate \
   -H "Content-Type: application/json" \
   -d '{"refined_spec": "Build a customer support chatbot that remembers conversation history across sessions and routes queries to specialist agents for billing, shipping, and returns."}' | jq .
 
 # 4. Open the app
-# Open https://thedysko.ai in a browser
+# Open https://archstudio.thedysko.ai in a browser
 ```
 
 The `/generate` response should include `meta.stages.total_ms` — this confirms
@@ -257,12 +259,12 @@ through Vertex AI ADC.
 | `GOOGLE_CLOUD_PROJECT` | `your-project-id` | Required by Google GenAI/ADK Vertex mode |
 | `GOOGLE_CLOUD_LOCATION` | `us-central1` | Required by Google GenAI/ADK Vertex mode |
 | `AGENT_ENGINE_RESOURCE` | `projects/.../reasoningEngines/NNN` | From Step 3 output |
-| `ALLOWED_ORIGINS` | `https://thedysko.ai` | CORS |
+| `ALLOWED_ORIGINS` | `https://archstudio.thedysko.ai` | CORS |
 
 ### Frontend Cloud Run service (build-time arg)
 | Variable | Value |
 |---|---|
-| `NEXT_PUBLIC_API_URL` | `https://api.thedysko.ai` |
+| `NEXT_PUBLIC_API_URL` | `https://api-archstudio.thedysko.ai` |
 
 ---
 

@@ -2,7 +2,7 @@
 # Deploy the Next.js frontend to Cloud Run.
 #
 # NEXT_PUBLIC_API_URL is baked into the JS bundle at build time.
-# The backend Cloud Run service must already be live at api.thedysko.ai
+# The backend Cloud Run service must already be live at api-archstudio.thedysko.ai
 # before building the frontend image.
 #
 # Usage:
@@ -16,7 +16,9 @@ set -euo pipefail
 REGION="${GCP_LOCATION:-us-central1}"
 SERVICE="intentiv-frontend"
 IMAGE="gcr.io/${GCP_PROJECT}/${SERVICE}"
-BACKEND_URL="${NEXT_PUBLIC_API_URL:-https://api.thedysko.ai}"
+FRONTEND_DOMAIN="${FRONTEND_DOMAIN:-archstudio.thedysko.ai}"
+API_DOMAIN="${API_DOMAIN:-api-archstudio.thedysko.ai}"
+BACKEND_URL="${NEXT_PUBLIC_API_URL:-https://${API_DOMAIN}}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 
@@ -35,4 +37,4 @@ gcloud run deploy "${SERVICE}" \
 
 echo ""
 echo "✓ Frontend deployed."
-echo "Map custom domain: gcloud beta run domain-mappings create --service ${SERVICE} --domain thedysko.ai --region ${REGION}"
+echo "Map custom domain: gcloud beta run domain-mappings create --service ${SERVICE} --domain ${FRONTEND_DOMAIN} --region ${REGION}"

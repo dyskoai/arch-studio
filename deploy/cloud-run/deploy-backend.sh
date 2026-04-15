@@ -21,6 +21,8 @@ set -euo pipefail
 REGION="${GCP_LOCATION:-us-central1}"
 SERVICE="intentiv-backend"
 IMAGE="gcr.io/${GCP_PROJECT}/${SERVICE}"
+FRONTEND_DOMAIN="${FRONTEND_DOMAIN:-archstudio.thedysko.ai}"
+API_DOMAIN="${API_DOMAIN:-api-archstudio.thedysko.ai}"
 REFINER_MODEL="${REFINER_MODEL:-gemini-3.1-flash-lite-preview}"
 ROUTER_MODEL="${ROUTER_MODEL:-gemini-3.1-flash-lite-preview}"
 ARCHITECT_MODEL="${ARCHITECT_MODEL:-gemini-3.1-pro-preview}"
@@ -52,8 +54,8 @@ GOOGLE_GENAI_USE_VERTEXAI=true,\
 GOOGLE_CLOUD_PROJECT=${GCP_PROJECT},\
 GOOGLE_CLOUD_LOCATION=${REGION},\
 AGENT_ENGINE_RESOURCE=${AGENT_ENGINE_RESOURCE},\
-ALLOWED_ORIGINS=https://thedysko.ai"
+ALLOWED_ORIGINS=https://${FRONTEND_DOMAIN}"
 
 echo ""
 echo "✓ Backend deployed."
-echo "Map custom domain: gcloud beta run domain-mappings create --service ${SERVICE} --domain api.thedysko.ai --region ${REGION}"
+echo "Map custom domain: gcloud beta run domain-mappings create --service ${SERVICE} --domain ${API_DOMAIN} --region ${REGION}"
