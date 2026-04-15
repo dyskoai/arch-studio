@@ -48,6 +48,8 @@ def ensure_staging_bucket(bucket_name: str, project: str, location: str) -> None
 
 
 print(f"Deploying to project={GCP_PROJECT}, location={GCP_LOCATION} ...")
+print("If deployment fails, check startup logs with:")
+print(f"  gcloud logging read 'resource.type=ml_job' --project={GCP_PROJECT} --limit=50 --format=json | python3 -c \"import sys,json; [print(e['jsonPayload'].get('message','')) for e in json.load(sys.stdin) if 'jsonPayload' in e]\"")
 ensure_staging_bucket(BUCKET_NAME, GCP_PROJECT, GCP_LOCATION)
 
 vertexai.init(project=GCP_PROJECT, location=GCP_LOCATION, staging_bucket=STAGING_BUCKET)
@@ -55,15 +57,24 @@ vertexai.init(project=GCP_PROJECT, location=GCP_LOCATION, staging_bucket=STAGING
 engine = ReasoningEngine.create(
     AdkApp(agent=build_pipeline(best_practices=_load_best_practices())),
     requirements=[
-        "google-adk>=1.0.0",
-        "google-genai>=1.9.0",
-        "litellm>=1.50.0",
-        "pydantic>=2.9.0",
-        "pydantic-settings>=2.6.0",
+        # Pin to versions that match the local environment to avoid
+        # pickle/unpickle class mismatch in Agent Engine.
+        "google-adk==1.29.0",
+        "google-genai==1.72.0",
+        "pydantic==2.12.5",
+        "pydantic-settings==2.13.1",
+        # litellm is only used by the FastAPI refiner, not the pipeline agents.
     ],
     display_name="intentiv-pipeline",
-    # Include best-practices.md so the agent has access to it inside the engine
-    extra_packages=["best-practices.md"],
+    extra_packages=[
+        # best-practices.md is read by _load_best_practices() at local build time
+        # and embedded into the architect instruction — included for reference only.
+        "best-practices.md",
+        # ValidatorAgent is a custom BaseAgent subclass defined in app/agents/.
+        # Python pickles it by module path (app.agents.validator_agent), so Agent
+        # Engine must be able to import that module when it unpickles the agent.
+        "backend/app",
+    ],
 )
 
 print("\n✓ Deployed successfully.")
