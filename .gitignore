@@ -1,0 +1,58 @@
+# ─── Secrets & credentials ────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.pem
+*.key
+service-account*.json
+*-sa-key.json
+
+# ─── Python ───────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+.uv/
+*.egg-info/
+dist/
+build/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ─── Node / Next.js ───────────────────────────────────────────────────────────
+node_modules/
+.next/
+out/
+.env.local
+.env.*.local
+
+# ─── Docker ───────────────────────────────────────────────────────────────────
+# (Dockerfiles and compose are committed; only ignore local override files)
+docker-compose.override.yml
+
+# ─── IDEs ─────────────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+*.swo
+*.suo
+*.user
+
+# ─── OS ───────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ─── GCP / Cloud Build ────────────────────────────────────────────────────────
+.gcloud/
+gcloud-service-key.json
+
+# ─── Misc ─────────────────────────────────────────────────────────────────────
+*.log
+*.tmp
+.cache/

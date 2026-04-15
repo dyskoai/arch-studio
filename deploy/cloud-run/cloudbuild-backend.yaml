@@ -1,0 +1,12 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - build
+      - -f
+      - backend/Dockerfile
+      - -t
+      - $_IMAGE
+      - .   # build context = repo root (needed for best-practices.md)
+
+images:
+  - $_IMAGE
