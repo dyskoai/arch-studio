@@ -42,13 +42,27 @@ if [ ! -f "${REPO_ROOT}/frontend/.next/standalone/server.js" ]; then
   exit 1
 fi
 
-# Step 2 — package and push the already-compiled frontend image.
-echo "Packaging frontend image from compiled output..."
-gcloud builds submit "${REPO_ROOT}" \
-  --substitutions "_IMAGE=${IMAGE}" \
-  --config "${REPO_ROOT}/deploy/cloud-run/cloudbuild-frontend.yaml"
+# Step 2 — create a small Docker context from compiled output.
+# gcloud builds submit can exclude .next via .gcloudignore/.gitignore defaults,
+# so copy only the runtime files into an explicit temporary context.
+BUILD_CONTEXT="$(mktemp -d)"
+cleanup() {
+  rm -rf "${BUILD_CONTEXT}"
+}
+trap cleanup EXIT
 
-# Step 3 — deploy service
+cp -R "${REPO_ROOT}/frontend/.next/standalone/." "${BUILD_CONTEXT}/"
+mkdir -p "${BUILD_CONTEXT}/.next" "${BUILD_CONTEXT}/public"
+cp -R "${REPO_ROOT}/frontend/.next/static" "${BUILD_CONTEXT}/.next/static"
+cp -R "${REPO_ROOT}/frontend/public/." "${BUILD_CONTEXT}/public/"
+cp "${REPO_ROOT}/frontend/Dockerfile.prebuilt" "${BUILD_CONTEXT}/Dockerfile"
+
+# Step 3 — package and push the already-compiled frontend image.
+echo "Packaging frontend image from compiled output..."
+gcloud builds submit "${BUILD_CONTEXT}" \
+  --tag "${IMAGE}"
+
+# Step 4 — deploy service
 echo "Deploying Cloud Run service ${SERVICE}..."
 gcloud run deploy "${SERVICE}" \
   --image "${IMAGE}" \
