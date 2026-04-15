@@ -59,9 +59,9 @@ gcloud auth application-default login   # needed for Agent Engine deploy script
 export GCP_PROJECT=your-gcp-project-id
 export GCP_LOCATION=us-central1
 export MODEL_LOCATION=global
-export REFINER_MODEL=your-refiner-model
-export ROUTER_MODEL=your-router-model
-export ARCHITECT_MODEL=your-architect-model
+export REFINER_MODEL=gemini-2.5-flash-lite
+export ROUTER_MODEL=gemini-2.5-flash-lite
+export ARCHITECT_MODEL=gemini-2.5-pro
 export FRONTEND_DOMAIN=archstudio.thedysko.ai
 export API_DOMAIN=api-archstudio.thedysko.ai
 export BACKEND_SERVICE_ACCOUNT=797664949634-compute@developer.gserviceaccount.com

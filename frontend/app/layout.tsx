@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "@/styles/globals.css";
 
 export const metadata: Metadata = {
-  title: "Intentiv · Architecture Studio",
+  title: "Arch Studio",
   description: "AI-powered agentic architecture designer",
 };
 

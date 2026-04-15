@@ -10,9 +10,9 @@ class Settings(BaseSettings):
     # Via LiteLLM:     "litellm/anthropic/claude-sonnet-4-20250514"
     #                  "litellm/openai/gpt-4o"
     #
-    refiner_model:   str = "gemini-3.1-flash-lite-preview"
-    router_model:    str = "gemini-3.1-flash-lite-preview"
-    architect_model: str = "gemini-3.1-pro-preview"
+    refiner_model:   str = "gemini-2.5-flash-lite"
+    router_model:    str = "gemini-2.5-flash-lite"
+    architect_model: str = "gemini-2.5-pro"
 
     # ── API keys — all optional; set whichever your model strings require ─────
     google_api_key:    str = ""

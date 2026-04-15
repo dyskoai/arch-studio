@@ -23,7 +23,7 @@ export function RoughInputPanel() {
       <div className="w-full max-w-xl flex flex-col gap-8">
         {/* Brand */}
         <p className="text-[9px] tracking-[0.35em] text-slate-500 uppercase">
-          Intentiv · Architecture Studio
+          Arch Studio
         </p>
 
         {/* Headline */}

@@ -52,6 +52,7 @@ for _mod_name in [
 GCP_PROJECT    = os.environ["GCP_PROJECT"]
 GCP_LOCATION   = os.environ.get("GCP_LOCATION", "us-central1")
 MODEL_LOCATION = os.environ.get("MODEL_LOCATION", "global")
+AGENT_ENGINE_RESOURCE = os.environ.get("AGENT_ENGINE_RESOURCE", "")
 STAGING_BUCKET = os.environ.get("STAGING_BUCKET", f"gs://{GCP_PROJECT}-adk-staging")
 BUCKET_NAME    = STAGING_BUCKET.removeprefix("gs://")
 
@@ -78,18 +79,19 @@ ensure_staging_bucket(BUCKET_NAME, GCP_PROJECT, GCP_LOCATION)
 
 vertexai.init(project=GCP_PROJECT, location=GCP_LOCATION, staging_bucket=STAGING_BUCKET)
 
-engine = ReasoningEngine.create(
-    AdkApp(
-        agent=build_pipeline(best_practices=_load_best_practices()),
-        env_vars={
-            "GOOGLE_GENAI_USE_VERTEXAI": "true",
-            "GOOGLE_CLOUD_PROJECT": GCP_PROJECT,
-            "GOOGLE_CLOUD_LOCATION": MODEL_LOCATION,
-            "ROUTER_MODEL": os.environ.get("ROUTER_MODEL", ""),
-            "ARCHITECT_MODEL": os.environ.get("ARCHITECT_MODEL", ""),
-        },
-    ),
-    requirements=[
+agent_app = AdkApp(
+    agent=build_pipeline(best_practices=_load_best_practices()),
+    env_vars={
+        "GOOGLE_GENAI_USE_VERTEXAI": "true",
+        "GOOGLE_CLOUD_PROJECT": GCP_PROJECT,
+        "GOOGLE_CLOUD_LOCATION": MODEL_LOCATION,
+        "ROUTER_MODEL": os.environ.get("ROUTER_MODEL", ""),
+        "ARCHITECT_MODEL": os.environ.get("ARCHITECT_MODEL", ""),
+    },
+)
+
+engine_kwargs = {
+    "requirements": [
         # Pin to versions that match the local environment to avoid
         # pickle/unpickle class mismatch in Agent Engine.
         "google-adk==1.29.0",
@@ -98,13 +100,23 @@ engine = ReasoningEngine.create(
         "pydantic-settings==2.13.1",
         # litellm is only used by the FastAPI refiner, not the pipeline agents.
     ],
-    display_name="intentiv-pipeline",
-    extra_packages=[
+    "display_name": "intentiv-pipeline",
+    "extra_packages": [
         # best-practices.md is read by _load_best_practices() at local build time
         # and embedded into the architect instruction string — no runtime reads.
         "best-practices.md",
     ],
-)
+}
+
+if AGENT_ENGINE_RESOURCE:
+    print(f"Updating existing Agent Engine: {AGENT_ENGINE_RESOURCE}")
+    engine = ReasoningEngine(AGENT_ENGINE_RESOURCE).update(
+        reasoning_engine=agent_app,
+        **engine_kwargs,
+    )
+else:
+    print("Creating new Agent Engine...")
+    engine = ReasoningEngine.create(agent_app, **engine_kwargs)
 
 print("\n✓ Deployed successfully.")
 print(f"\nAGENT_ENGINE_RESOURCE={engine.resource_name}\n")

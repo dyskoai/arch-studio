@@ -8,7 +8,7 @@ export function TopBar() {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-3 border-b border-[#1e1e2e] bg-[#0a0a0f]/90 backdrop-blur">
       <span className="text-[10px] tracking-[0.3em] text-slate-500 uppercase">
-        Intentiv · Architecture Studio
+        Arch Studio
       </span>
       <button
         onClick={reset}
