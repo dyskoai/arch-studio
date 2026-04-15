@@ -62,6 +62,7 @@ export ROUTER_MODEL=your-router-model
 export ARCHITECT_MODEL=your-architect-model
 export FRONTEND_DOMAIN=archstudio.thedysko.ai
 export API_DOMAIN=api-archstudio.thedysko.ai
+export BACKEND_SERVICE_ACCOUNT=797664949634-compute@developer.gserviceaccount.com
 gcloud config set project "$GCP_PROJECT"
 gcloud auth application-default set-quota-project "$GCP_PROJECT"
 
@@ -77,8 +78,8 @@ gcloud services enable \
 
 ## Step 1 — IAM Setup (one-time)
 
-Creates the service account the backend Cloud Run service runs as.
-It needs `roles/aiplatform.user` to call Agent Engine via ADC — **no API key in the container**.
+Grants the backend Cloud Run service account `roles/aiplatform.user` so it can
+call Vertex AI and Agent Engine via ADC — **no API key in the container**.
 
 ```bash
 cd acrh-studio
@@ -87,8 +88,8 @@ chmod +x deploy/cloud-run/iam-setup.sh
 ```
 
 What it does:
-- Creates service account `intentiv-backend-sa@$GCP_PROJECT.iam.gserviceaccount.com`
-- Grants `roles/aiplatform.user` so it can call Vertex AI Agent Engine
+- Uses `BACKEND_SERVICE_ACCOUNT`, defaulting to `797664949634-compute@developer.gserviceaccount.com`
+- Grants `roles/aiplatform.user` so it can call Vertex AI and Agent Engine
 
 ---
 
@@ -96,7 +97,7 @@ What it does:
 
 Production uses Vertex AI through Application Default Credentials:
 
-- The backend Cloud Run service runs as `intentiv-backend-sa`.
+- The backend Cloud Run service runs as `797664949634-compute@developer.gserviceaccount.com`.
 - `/refine` calls Gemini from the backend with Vertex AI ADC.
 - `/generate` calls the deployed Agent Engine resource with Vertex AI ADC.
 - The deployed Agent Engine app also calls Gemini through Vertex AI ADC.
@@ -255,6 +256,7 @@ through Vertex AI ADC.
 | `REFINER_MODEL` | production model name | Used by `/refine` in Cloud Run |
 | `ROUTER_MODEL` | production model name | Baked into the deployed Agent Engine pipeline |
 | `ARCHITECT_MODEL` | production model name | Baked into the deployed Agent Engine pipeline |
+| `BACKEND_SERVICE_ACCOUNT` | `797664949634-compute@developer.gserviceaccount.com` | Cloud Run runtime identity |
 | `GOOGLE_GENAI_USE_VERTEXAI` | `true` | Lets ADK use Vertex AI instead of an API key |
 | `GOOGLE_CLOUD_PROJECT` | `your-project-id` | Required by Google GenAI/ADK Vertex mode |
 | `GOOGLE_CLOUD_LOCATION` | `us-central1` | Required by Google GenAI/ADK Vertex mode |

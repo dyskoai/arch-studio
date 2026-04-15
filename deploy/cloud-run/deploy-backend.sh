@@ -5,8 +5,7 @@
 #   - gcloud CLI authenticated
 #   - AGENT_ENGINE_RESOURCE exported (from deploy/agent-engine/deploy.py output)
 #   - GCP_PROJECT exported
-#   - Secret Manager secret "intentiv-google-api-key" created
-#     (only needed if USE_AGENT_ENGINE=false; Agent Engine uses ADC internally)
+#   - BACKEND_SERVICE_ACCOUNT has roles/aiplatform.user
 #
 # Usage:
 #   export GCP_PROJECT=your-project
@@ -21,6 +20,7 @@ set -euo pipefail
 REGION="${GCP_LOCATION:-us-central1}"
 SERVICE="intentiv-backend"
 IMAGE="gcr.io/${GCP_PROJECT}/${SERVICE}"
+BACKEND_SERVICE_ACCOUNT="${BACKEND_SERVICE_ACCOUNT:-797664949634-compute@developer.gserviceaccount.com}"
 FRONTEND_DOMAIN="${FRONTEND_DOMAIN:-archstudio.thedysko.ai}"
 API_DOMAIN="${API_DOMAIN:-api-archstudio.thedysko.ai}"
 REFINER_MODEL="${REFINER_MODEL:-gemini-3.1-flash-lite-preview}"
@@ -37,11 +37,12 @@ gcloud builds submit "${REPO_ROOT}" \
 
 # Step 2 — deploy service
 echo "Deploying Cloud Run service ${SERVICE}..."
+echo "Using service account: ${BACKEND_SERVICE_ACCOUNT}"
 gcloud run deploy "${SERVICE}" \
   --image "${IMAGE}" \
   --region "${REGION}" \
   --allow-unauthenticated \
-  --service-account "intentiv-backend-sa@${GCP_PROJECT}.iam.gserviceaccount.com" \
+  --service-account "${BACKEND_SERVICE_ACCOUNT}" \
   --set-env-vars "\
 ENV=production,\
 USE_AGENT_ENGINE=true,\

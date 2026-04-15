@@ -1,27 +1,20 @@
 #!/usr/bin/env bash
 # One-time IAM setup for the Cloud Run backend service account.
-# The service account is granted roles/aiplatform.user so it can call Agent Engine
+# The service account is granted roles/aiplatform.user so it can call Vertex AI and Agent Engine
 # via Application Default Credentials — no API key needed in the container.
 #
 # Usage:
 #   export GCP_PROJECT=your-project
+#   export BACKEND_SERVICE_ACCOUNT=797664949634-compute@developer.gserviceaccount.com
 #   ./deploy/cloud-run/iam-setup.sh
 
 set -euo pipefail
 
 : "${GCP_PROJECT:?GCP_PROJECT must be set}"
 
-SA_NAME="intentiv-backend-sa"
-SA_EMAIL="${SA_NAME}@${GCP_PROJECT}.iam.gserviceaccount.com"
+SA_EMAIL="${BACKEND_SERVICE_ACCOUNT:-797664949634-compute@developer.gserviceaccount.com}"
 
-if gcloud iam service-accounts describe "${SA_EMAIL}" --project "${GCP_PROJECT}" >/dev/null 2>&1; then
-  echo "Service account already exists: ${SA_EMAIL}"
-else
-  echo "Creating service account ${SA_EMAIL}..."
-  gcloud iam service-accounts create "${SA_NAME}" \
-    --display-name "Intentiv Backend (Cloud Run)" \
-    --project "${GCP_PROJECT}"
-fi
+echo "Using backend service account: ${SA_EMAIL}"
 
 echo "Granting roles/aiplatform.user..."
 gcloud projects add-iam-policy-binding "${GCP_PROJECT}" \
