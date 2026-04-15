@@ -88,6 +88,10 @@ async def _run_via_agent_engine(refined_spec: str, settings) -> dict[str, Any]:
 
 def _extract_architecture_from_event(event: Any) -> str:
     """Return architecture JSON from an Agent Engine stream event, if present."""
+    state_architecture = _event_state_delta(event).get("final_architecture", "")
+    if state_architecture:
+        return state_architecture
+
     for text in _event_text_parts(event):
         candidate = text.strip()
         if candidate.startswith("```"):
@@ -99,6 +103,23 @@ def _extract_architecture_from_event(event: Any) -> str:
         if isinstance(data, dict) and "nodes" in data and "edges" in data:
             return json.dumps(data)
     return ""
+
+
+def _event_state_delta(event: Any) -> dict[str, Any]:
+    """Return EventActions state_delta from dict or ADK Event object."""
+    if isinstance(event, dict):
+        actions = event.get("actions") or {}
+        state_delta = (
+            actions.get("state_delta")
+            or actions.get("stateDelta")
+            or actions.get("state")
+            or {}
+        )
+        return state_delta if isinstance(state_delta, dict) else {}
+
+    actions = getattr(event, "actions", None)
+    state_delta = getattr(actions, "state_delta", {}) if actions else {}
+    return state_delta if isinstance(state_delta, dict) else {}
 
 
 def _event_text_parts(event: Any) -> list[str]:
