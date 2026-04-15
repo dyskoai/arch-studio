@@ -19,8 +19,8 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.origins_list,
-    allow_methods=["POST", "GET"],
-    allow_headers=["Content-Type"],
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.state.limiter = limiter
