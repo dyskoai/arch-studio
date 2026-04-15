@@ -3,9 +3,7 @@ steps:
     args:
       - build
       - -f
-      - frontend/Dockerfile
-      - --build-arg
-      - NEXT_PUBLIC_API_URL=$_NEXT_PUBLIC_API_URL
+      - frontend/Dockerfile.prebuilt
       - -t
       - $_IMAGE
       - .   # build context = repo root

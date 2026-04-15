@@ -33,6 +33,7 @@ Vertex AI Gemini
 | `gcloud` CLI | latest | `gcloud components update` |
 | Python | 3.12+ | for running the deploy script |
 | `uv` | latest | `pip install uv` |
+| Node.js/npm | Node 20+ | required for frontend prebuild deploy |
 | `jq` | optional | only used for pretty-printing verification responses |
 
 This guide is safe to run from a remote machine. It does not depend on your
@@ -179,8 +180,10 @@ curl https://api-archstudio.thedysko.ai/health
 
 ## Step 5 — Deploy the Frontend (Cloud Run)
 
-`NEXT_PUBLIC_API_URL` is baked into the JS bundle at build time, so the backend
-must be live at `api-archstudio.thedysko.ai` **before** building the frontend image.
+`NEXT_PUBLIC_API_URL` is baked into the JS bundle at build time. This script
+builds the Next.js app on the remote machine first, then Cloud Build only
+packages the compiled `.next/standalone` output into a runtime image. The
+backend must be live at `api-archstudio.thedysko.ai` before running it.
 
 ```bash
 chmod +x deploy/cloud-run/deploy-frontend.sh
