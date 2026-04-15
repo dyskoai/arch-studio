@@ -11,8 +11,8 @@ from app.services.ratelimit import limiter
 settings = get_settings()
 
 app = FastAPI(
-    title="Intentiv Architecture Studio API",
-    version="3.0.0",
+    title="Architecture Studio API",
+    version="3.0.1",
     docs_url="/docs" if settings.env != "production" else None,
 )
 
