@@ -58,6 +58,7 @@ gcloud auth application-default login   # needed for Agent Engine deploy script
 # Set your project
 export GCP_PROJECT=your-gcp-project-id
 export GCP_LOCATION=us-central1
+export MODEL_LOCATION=global
 export REFINER_MODEL=your-refiner-model
 export ROUTER_MODEL=your-router-model
 export ARCHITECT_MODEL=your-architect-model
@@ -119,10 +120,10 @@ cd acrh-studio
 uv sync --project backend
 
 # Deploy (creates the GCS staging bucket automatically if it doesn't exist)
-GCP_PROJECT=$GCP_PROJECT GCP_LOCATION=$GCP_LOCATION uv run --project backend python deploy/agent-engine/deploy.py
+GCP_PROJECT=$GCP_PROJECT GCP_LOCATION=$GCP_LOCATION MODEL_LOCATION=$MODEL_LOCATION uv run --project backend python deploy/agent-engine/deploy.py
 ```
 
-> To use a custom staging bucket: `STAGING_BUCKET=gs://my-bucket GCP_PROJECT=$GCP_PROJECT GCP_LOCATION=$GCP_LOCATION uv run --project backend python deploy/agent-engine/deploy.py`
+> To use a custom staging bucket: `STAGING_BUCKET=gs://my-bucket GCP_PROJECT=$GCP_PROJECT GCP_LOCATION=$GCP_LOCATION MODEL_LOCATION=$MODEL_LOCATION uv run --project backend python deploy/agent-engine/deploy.py`
 
 **Expected output:**
 ```
@@ -158,7 +159,7 @@ The script sets the production Vertex AI env vars required by ADK:
 
 - `GOOGLE_GENAI_USE_VERTEXAI=true`
 - `GOOGLE_CLOUD_PROJECT=$GCP_PROJECT`
-- `GOOGLE_CLOUD_LOCATION=us-central1`
+- `GOOGLE_CLOUD_LOCATION=global`
 
 **After deploy, map the custom domain:**
 ```bash
@@ -255,14 +256,15 @@ through Vertex AI ADC.
 | `ENV` | `production` | Disables `/docs` |
 | `USE_AGENT_ENGINE` | `true` | Routes pipeline to Agent Engine |
 | `GCP_PROJECT` | `your-project-id` | |
-| `GCP_LOCATION` | `us-central1` | |
+| `GCP_LOCATION` | `us-central1` | Cloud Run and Agent Engine location |
+| `MODEL_LOCATION` | `global` | Vertex AI Gemini model location |
 | `REFINER_MODEL` | production model name | Used by `/refine` in Cloud Run |
 | `ROUTER_MODEL` | production model name | Baked into the deployed Agent Engine pipeline |
 | `ARCHITECT_MODEL` | production model name | Baked into the deployed Agent Engine pipeline |
 | `BACKEND_SERVICE_ACCOUNT` | `797664949634-compute@developer.gserviceaccount.com` | Cloud Run runtime identity |
 | `GOOGLE_GENAI_USE_VERTEXAI` | `true` | Lets ADK use Vertex AI instead of an API key |
 | `GOOGLE_CLOUD_PROJECT` | `your-project-id` | Required by Google GenAI/ADK Vertex mode |
-| `GOOGLE_CLOUD_LOCATION` | `us-central1` | Required by Google GenAI/ADK Vertex mode |
+| `GOOGLE_CLOUD_LOCATION` | `global` | Required by Google GenAI/ADK Vertex mode |
 | `AGENT_ENGINE_RESOURCE` | `projects/.../reasoningEngines/NNN` | From Step 3 output |
 | `ALLOWED_ORIGINS` | `https://archstudio.thedysko.ai` | CORS |
 

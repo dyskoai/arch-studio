@@ -31,6 +31,7 @@ class Settings(BaseSettings):
     use_agent_engine:      bool = False
     gcp_project:           str  = ""
     gcp_location:          str  = "us-central1"
+    model_location:        str  = "global"
     agent_engine_resource: str  = ""   # projects/<proj>/locations/<loc>/reasoningEngines/<id>
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")

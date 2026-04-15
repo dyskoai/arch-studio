@@ -51,6 +51,7 @@ for _mod_name in [
 
 GCP_PROJECT    = os.environ["GCP_PROJECT"]
 GCP_LOCATION   = os.environ.get("GCP_LOCATION", "us-central1")
+MODEL_LOCATION = os.environ.get("MODEL_LOCATION", "global")
 STAGING_BUCKET = os.environ.get("STAGING_BUCKET", f"gs://{GCP_PROJECT}-adk-staging")
 BUCKET_NAME    = STAGING_BUCKET.removeprefix("gs://")
 
@@ -70,7 +71,7 @@ def ensure_staging_bucket(bucket_name: str, project: str, location: str) -> None
         print(f"Staging bucket already exists: gs://{bucket_name}")
 
 
-print(f"Deploying to project={GCP_PROJECT}, location={GCP_LOCATION} ...")
+print(f"Deploying to project={GCP_PROJECT}, agent_location={GCP_LOCATION}, model_location={MODEL_LOCATION} ...")
 print("If deployment fails, check startup logs with:")
 print(f"  gcloud logging read 'resource.type=ml_job' --project={GCP_PROJECT} --limit=50 --format=json | python3 -c \"import sys,json; [print(e['jsonPayload'].get('message','')) for e in json.load(sys.stdin) if 'jsonPayload' in e]\"")
 ensure_staging_bucket(BUCKET_NAME, GCP_PROJECT, GCP_LOCATION)
@@ -83,7 +84,7 @@ engine = ReasoningEngine.create(
         env_vars={
             "GOOGLE_GENAI_USE_VERTEXAI": "true",
             "GOOGLE_CLOUD_PROJECT": GCP_PROJECT,
-            "GOOGLE_CLOUD_LOCATION": GCP_LOCATION,
+            "GOOGLE_CLOUD_LOCATION": MODEL_LOCATION,
             "ROUTER_MODEL": os.environ.get("ROUTER_MODEL", ""),
             "ARCHITECT_MODEL": os.environ.get("ARCHITECT_MODEL", ""),
         },

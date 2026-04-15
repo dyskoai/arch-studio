@@ -13,7 +13,7 @@ def export_api_keys(settings: Settings) -> None:
     elif settings.gcp_project:
         os.environ.setdefault("GOOGLE_GENAI_USE_VERTEXAI", "true")
         os.environ.setdefault("GOOGLE_CLOUD_PROJECT", settings.gcp_project)
-        os.environ.setdefault("GOOGLE_CLOUD_LOCATION", settings.gcp_location)
+        os.environ.setdefault("GOOGLE_CLOUD_LOCATION", settings.model_location)
     if settings.anthropic_api_key:
         os.environ["ANTHROPIC_API_KEY"] = settings.anthropic_api_key
     if settings.openai_api_key:
