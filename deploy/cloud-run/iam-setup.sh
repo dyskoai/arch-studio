@@ -14,10 +14,14 @@ set -euo pipefail
 SA_NAME="intentiv-backend-sa"
 SA_EMAIL="${SA_NAME}@${GCP_PROJECT}.iam.gserviceaccount.com"
 
-echo "Creating service account ${SA_EMAIL}..."
-gcloud iam service-accounts create "${SA_NAME}" \
-  --display-name "Intentiv Backend (Cloud Run)" \
-  --project "${GCP_PROJECT}"
+if gcloud iam service-accounts describe "${SA_EMAIL}" --project "${GCP_PROJECT}" >/dev/null 2>&1; then
+  echo "Service account already exists: ${SA_EMAIL}"
+else
+  echo "Creating service account ${SA_EMAIL}..."
+  gcloud iam service-accounts create "${SA_NAME}" \
+    --display-name "Intentiv Backend (Cloud Run)" \
+    --project "${GCP_PROJECT}"
+fi
 
 echo "Granting roles/aiplatform.user..."
 gcloud projects add-iam-policy-binding "${GCP_PROJECT}" \

@@ -17,7 +17,7 @@ MOCK_PIPELINE_RESULT = {
         "nodes": [
             {"id": "user_input", "label": "User Input", "tier": "entry", "layer": 0,
              "role": "Entry", "rationale": "", "primary": "", "secondary": ""},
-            {"id": "router", "label": "Intent Router", "tier": "lite", "layer": 1,
+            {"id": "router", "label": "Intent Router", "tier": "light", "layer": 1,
              "role": "Routes", "rationale": "Fast", "primary": "Cloud", "secondary": "OSS"},
             {"id": "output_response", "label": "Output", "tier": "entry", "layer": 4,
              "role": "Exit", "rationale": "", "primary": "", "secondary": ""},

@@ -78,7 +78,16 @@ ensure_staging_bucket(BUCKET_NAME, GCP_PROJECT, GCP_LOCATION)
 vertexai.init(project=GCP_PROJECT, location=GCP_LOCATION, staging_bucket=STAGING_BUCKET)
 
 engine = ReasoningEngine.create(
-    AdkApp(agent=build_pipeline(best_practices=_load_best_practices())),
+    AdkApp(
+        agent=build_pipeline(best_practices=_load_best_practices()),
+        env_vars={
+            "GOOGLE_GENAI_USE_VERTEXAI": "true",
+            "GOOGLE_CLOUD_PROJECT": GCP_PROJECT,
+            "GOOGLE_CLOUD_LOCATION": GCP_LOCATION,
+            "ROUTER_MODEL": os.environ.get("ROUTER_MODEL", ""),
+            "ARCHITECT_MODEL": os.environ.get("ARCHITECT_MODEL", ""),
+        },
+    ),
     requirements=[
         # Pin to versions that match the local environment to avoid
         # pickle/unpickle class mismatch in Agent Engine.

@@ -76,7 +76,9 @@ if USE_LOCAL_AGENTS:
         # If user explicitly asked for local agents, we should probably fail.
         raise e
 else:
-    # Existing Cloud Agent Engine initialization
+    # Cloud Agent Engine — IDs are read from env vars at startup time,
+    # but the actual agent_engines.get() calls are deferred to first use
+    # so the server starts cleanly even if a resource is temporarily unavailable.
     CHAT_AGENT_ENGINE_ID = os.getenv("CHAT_AGENT_ENGINE_ID")
     COMPANION_AGENT_ENGINE_ID = os.getenv("COMPANION_AGENT_ENGINE_ID")
     IMAGE_AGENT_ENGINE_ID = os.getenv("IMAGE_AGENT_ENGINE_ID") or os.getenv("AGENT_ENGINE_ID")
@@ -86,9 +88,38 @@ else:
             "CHAT_AGENT_ENGINE_ID or COMPANION_AGENT_ENGINE_ID not found in environment variables. "
             "Please set CHAT_AGENT_ENGINE_ID and COMPANION_AGENT_ENGINE_ID as environment variables."
         )
-    chat_remote_app = agent_engines.get(CHAT_AGENT_ENGINE_ID)
-    companion_remote_app = agent_engines.get(COMPANION_AGENT_ENGINE_ID)
-    image_remote_app = agent_engines.get(IMAGE_AGENT_ENGINE_ID) if IMAGE_AGENT_ENGINE_ID else None
+
+    _chat_remote_app = None
+    _companion_remote_app = None
+    _image_remote_app = None
+
+    def _get_chat_app():
+        global _chat_remote_app
+        if _chat_remote_app is None:
+            _chat_remote_app = agent_engines.get(CHAT_AGENT_ENGINE_ID)
+        return _chat_remote_app
+
+    def _get_companion_app():
+        global _companion_remote_app
+        if _companion_remote_app is None:
+            _companion_remote_app = agent_engines.get(COMPANION_AGENT_ENGINE_ID)
+        return _companion_remote_app
+
+    def _get_image_app():
+        global _image_remote_app
+        if _image_remote_app is None and IMAGE_AGENT_ENGINE_ID:
+            _image_remote_app = agent_engines.get(IMAGE_AGENT_ENGINE_ID)
+        return _image_remote_app
+
+    # Aliases so the rest of the file works without change
+    class _LazyApp:
+        """Proxy that initialises the remote app on first attribute access."""
+        def __init__(self, getter): self._getter = getter
+        def __getattr__(self, name): return getattr(self._getter(), name)
+
+    chat_remote_app      = _LazyApp(_get_chat_app)
+    companion_remote_app = _LazyApp(_get_companion_app)
+    image_remote_app     = _LazyApp(_get_image_app)
 
 
 # Create router

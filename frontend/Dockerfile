@@ -5,6 +5,7 @@ COPY frontend/package*.json .
 RUN npm ci
 
 COPY frontend/ .
+RUN mkdir -p public
 
 # NEXT_PUBLIC_API_URL is baked into the JS bundle at build time
 ARG NEXT_PUBLIC_API_URL=http://localhost:8080

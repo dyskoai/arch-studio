@@ -13,7 +13,7 @@ dependencies = [
     "slowapi>=0.1.9",
     # Agent Engine — required for demo/Cloud Run deployment (USE_AGENT_ENGINE=true)
     # Safe to leave installed in OSS builds; only activated when env vars are set.
-    "google-cloud-aiplatform[reasoning_engines,adk]>=1.93.0",
+    "google-cloud-aiplatform[adk]>=1.93.0",
 ]
 
 [project.optional-dependencies]

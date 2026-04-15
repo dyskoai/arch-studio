@@ -13,17 +13,18 @@ set -euo pipefail
 
 : "${GCP_PROJECT:?GCP_PROJECT must be set}"
 
-REGION="us-central1"
+REGION="${GCP_LOCATION:-us-central1}"
 SERVICE="intentiv-frontend"
 IMAGE="gcr.io/${GCP_PROJECT}/${SERVICE}"
-BACKEND_URL="https://api.thedysko.ai"
+BACKEND_URL="${NEXT_PUBLIC_API_URL:-https://api.thedysko.ai}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 
 # Step 1 — build and push frontend image with API URL baked in
 echo "Building frontend image (NEXT_PUBLIC_API_URL=${BACKEND_URL})..."
-gcloud builds submit ../.. \
-  --tag "${IMAGE}" \
-  --substitutions "_NEXT_PUBLIC_API_URL=${BACKEND_URL}" \
-  --config deploy/cloud-run/cloudbuild-frontend.yaml
+gcloud builds submit "${REPO_ROOT}" \
+  --substitutions "_IMAGE=${IMAGE},_NEXT_PUBLIC_API_URL=${BACKEND_URL}" \
+  --config "${REPO_ROOT}/deploy/cloud-run/cloudbuild-frontend.yaml"
 
 # Step 2 — deploy service
 echo "Deploying Cloud Run service ${SERVICE}..."

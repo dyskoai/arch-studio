@@ -40,7 +40,7 @@ class ValidatorAgent(BaseAgent):
 
         repaired, issues = self._repair(raw)
 
-        summary = f"Validation complete. Issues found and repaired: {len(issues)}"
+        final_architecture = json.dumps(repaired)
 
         # State must be written via EventActions(state_delta=...) so ADK
         # persists it back to the session service. Direct ctx.session.state
@@ -48,11 +48,11 @@ class ValidatorAgent(BaseAgent):
         yield Event(
             author=self.name,
             content=genai_types.Content(
-                parts=[genai_types.Part(text=summary)]
+                parts=[genai_types.Part(text=final_architecture)]
             ),
             actions=EventActions(
                 state_delta={
-                    "final_architecture": json.dumps(repaired),
+                    "final_architecture": final_architecture,
                     "repaired": len(issues) > 0,
                     "validator_issues": [i["type"] for i in issues],
                 }
