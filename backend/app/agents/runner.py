@@ -58,31 +58,84 @@ async def _run_via_agent_engine(refined_spec: str, settings) -> dict[str, Any]:
     logger.info("Agent Engine session created: %s", session_id)
 
     t_start = time.monotonic()
+    streamed_final_architecture = ""
     async for event in remote_app.async_stream_query(
         user_id="api_user",
         session_id=session_id,
         message=refined_spec,
     ):
-        # Consume all events — validator writes final_architecture to session state
-        # via EventActions(state_delta=...) which Agent Engine persists automatically.
+        # Agent Engine should persist validator state_delta, but some deployed
+        # ADK/Agent Engine combinations expose the validator output only in
+        # streamed event text. Keep a parsed fallback so production generation
+        # does not depend on state persistence alone.
+        streamed_final_architecture = (
+            _extract_architecture_from_event(event) or streamed_final_architecture
+        )
         logger.debug("Agent Engine event: %s", event)
     t_end = time.monotonic()
 
-    # Read session state — the output lives here, not in text events
+    # Prefer session state; fall back to validator event text if Agent Engine did
+    # not persist EventActions(state_delta=...).
     session_data = remote_app.get_session(user_id="api_user", session_id=session_id)
     state = session_data.get("state", {})
 
-    return _extract_result(state, total_sec=t_end - t_start)
+    return _extract_result(
+        state,
+        total_sec=t_end - t_start,
+        fallback_final_architecture=streamed_final_architecture,
+    )
 
 
-def _extract_result(state: dict, total_sec: float = 0.0) -> dict[str, Any]:
+def _extract_architecture_from_event(event: Any) -> str:
+    """Return architecture JSON from an Agent Engine stream event, if present."""
+    for text in _event_text_parts(event):
+        candidate = text.strip()
+        if candidate.startswith("```"):
+            candidate = candidate.strip("`").removeprefix("json").strip()
+        try:
+            data = json.loads(candidate)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(data, dict) and "nodes" in data and "edges" in data:
+            return json.dumps(data)
+    return ""
+
+
+def _event_text_parts(event: Any) -> list[str]:
+    """Support both dict events from Agent Engine and local ADK Event objects."""
+    if isinstance(event, dict):
+        parts = event.get("content", {}).get("parts", [])
+        return [
+            part.get("text", "")
+            for part in parts
+            if isinstance(part, dict) and part.get("text")
+        ]
+
+    content = getattr(event, "content", None)
+    parts = getattr(content, "parts", []) if content else []
+    texts: list[str] = []
+    for part in parts:
+        text = getattr(part, "text", "")
+        if text:
+            texts.append(text)
+    return texts
+
+
+def _extract_result(
+    state: dict,
+    total_sec: float = 0.0,
+    fallback_final_architecture: str = "",
+) -> dict[str, Any]:
     """
     Mirrors the final section of pipeline.run_pipeline() so the return shape is identical.
     Called for both Agent Engine results and (in tests) direct state inspection.
     """
-    final_arch_json = state.get("final_architecture", "")
+    final_arch_json = state.get("final_architecture", "") or fallback_final_architecture
     if not final_arch_json:
-        raise ValueError("Pipeline completed but final_architecture is empty in session state")
+        raise ValueError(
+            "Pipeline completed but final_architecture is empty in session state "
+            "and no architecture JSON was found in streamed events"
+        )
 
     arch_data = json.loads(final_arch_json)
 
