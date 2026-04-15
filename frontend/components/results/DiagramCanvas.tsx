@@ -34,9 +34,10 @@ function layoutNodes(nodes: ArchNode[]): Map<string, { x: number; y: number }> {
     layers.get(n.layer)!.push(n);
   }
   const pos = new Map<string, { x: number; y: number }>();
-  const maxCount = Math.max(...[...layers.values()].map((l) => l.length));
+  const layerEntries = Array.from(layers.entries());
+  const maxCount = Math.max(...layerEntries.map(([, l]) => l.length));
 
-  for (const [layer, nodesInLayer] of layers) {
+  for (const [layer, nodesInLayer] of layerEntries) {
     const count = nodesInLayer.length;
     const totalW = count * NODE_W + (count - 1) * H_GAP;
     const maxW   = maxCount * NODE_W + (maxCount - 1) * H_GAP;
@@ -101,8 +102,9 @@ export function DiagramCanvas() {
 
   const pos      = layoutNodes(result.nodes);
   const maxLayer = Math.max(...result.nodes.map((n) => n.layer));
+  const uniqueLayers = Array.from(new Set(result.nodes.map((n) => n.layer)));
   const maxCount = Math.max(
-    ...[...new Set(result.nodes.map((n) => n.layer))].map(
+    ...uniqueLayers.map(
       (l) => result.nodes.filter((n) => n.layer === l).length
     )
   );
