@@ -71,6 +71,7 @@ async def _run_via_agent_engine(refined_spec: str, settings) -> dict[str, Any]:
         streamed_final_architecture = (
             _extract_architecture_from_event(event) or streamed_final_architecture
         )
+        logger.warning("Agent Engine stream event: %s", event)
         logger.debug("Agent Engine event: %s", event)
     t_end = time.monotonic()
 
