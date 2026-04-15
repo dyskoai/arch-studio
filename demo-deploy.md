@@ -78,12 +78,12 @@ Store it so the deploy script can reference it:
 ```bash
 # Create the secret
 echo -n "YOUR_GOOGLE_API_KEY" | \
-  gcloud secrets create intentiv-google-api-key \
+  gcloud secrets create dysko-google-api-key \
     --data-file=- \
     --replication-policy=automatic
 
 # Verify
-gcloud secrets versions access latest --secret=intentiv-google-api-key
+gcloud secrets versions access latest --secret=dysko-google-api-key
 ```
 
 > **Note:** In demo mode (`USE_AGENT_ENGINE=true`) the FastAPI backend does **not** call Gemini directly — Agent Engine does. This secret is stored for reference and future fallback use only.
@@ -101,9 +101,11 @@ cd acrh-studio
 # Install backend deps (needed to import pipeline modules)
 cd backend && uv pip install -r pyproject.toml --system && cd ..
 
-# Deploy
+# Deploy (creates the GCS staging bucket automatically if it doesn't exist)
 GCP_PROJECT=$GCP_PROJECT python deploy/agent-engine/deploy.py
 ```
+
+> To use a custom staging bucket: `STAGING_BUCKET=gs://my-bucket GCP_PROJECT=$GCP_PROJECT python deploy/agent-engine/deploy.py`
 
 **Expected output:**
 ```

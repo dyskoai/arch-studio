@@ -20,16 +20,37 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../backend"))
 
 import vertexai
+from google.cloud import storage
+from google.api_core.exceptions import Conflict
 from vertexai.preview.reasoning_engines import AdkApp, ReasoningEngine
 
 from app.agents.pipeline import build_pipeline, _load_best_practices
 
-GCP_PROJECT  = os.environ["GCP_PROJECT"]
-GCP_LOCATION = os.environ.get("GCP_LOCATION", "us-central1")
+GCP_PROJECT    = os.environ["GCP_PROJECT"]
+GCP_LOCATION   = os.environ.get("GCP_LOCATION", "us-central1")
+STAGING_BUCKET = os.environ.get("STAGING_BUCKET", f"gs://{GCP_PROJECT}-adk-staging")
+BUCKET_NAME    = STAGING_BUCKET.removeprefix("gs://")
+
+
+def ensure_staging_bucket(bucket_name: str, project: str, location: str) -> None:
+    """Create the GCS staging bucket if it doesn't already exist."""
+    client = storage.Client(project=project)
+    bucket = client.bucket(bucket_name)
+    if bucket.exists():
+        print(f"Staging bucket already exists: gs://{bucket_name}")
+        return
+    try:
+        client.create_bucket(bucket, project=project, location=location)
+        print(f"Created staging bucket: gs://{bucket_name}")
+    except Conflict:
+        # Race condition: another process created it between exists() and create_bucket()
+        print(f"Staging bucket already exists: gs://{bucket_name}")
+
 
 print(f"Deploying to project={GCP_PROJECT}, location={GCP_LOCATION} ...")
+ensure_staging_bucket(BUCKET_NAME, GCP_PROJECT, GCP_LOCATION)
 
-vertexai.init(project=GCP_PROJECT, location=GCP_LOCATION)
+vertexai.init(project=GCP_PROJECT, location=GCP_LOCATION, staging_bucket=STAGING_BUCKET)
 
 engine = ReasoningEngine.create(
     AdkApp(agent=build_pipeline(best_practices=_load_best_practices())),
