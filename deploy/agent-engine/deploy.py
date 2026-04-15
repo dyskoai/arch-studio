@@ -19,12 +19,35 @@ import sys
 # Add backend/ to path so we can import app modules
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../backend"))
 
+import importlib
+
+import cloudpickle
 import vertexai
 from google.cloud import storage
 from google.api_core.exceptions import Conflict
 from vertexai.preview.reasoning_engines import AdkApp, ReasoningEngine
 
 from app.agents.pipeline import build_pipeline, _load_best_practices
+
+# Register all local app modules for cloudpickle-by-value.
+# Default behaviour: cloudpickle stores a class by its module path (e.g.
+# "app.agents.validator_agent.ValidatorAgent"). Agent Engine then needs to
+# import that module at startup — which fails because app/ isn't installed.
+# register_pickle_by_value() switches to embedding the class bytecode directly
+# in the pickle, so the remote side reconstructs it without any import.
+for _mod_name in [
+    "app.agents.validator_agent",
+    "app.agents.router_agent",
+    "app.agents.architect_agent",
+    "app.agents.pipeline",
+    "app.config",
+    "app.models.schemas",
+    "app.agents._keys",
+]:
+    try:
+        cloudpickle.register_pickle_by_value(importlib.import_module(_mod_name))
+    except ImportError:
+        pass
 
 GCP_PROJECT    = os.environ["GCP_PROJECT"]
 GCP_LOCATION   = os.environ.get("GCP_LOCATION", "us-central1")
@@ -68,12 +91,8 @@ engine = ReasoningEngine.create(
     display_name="intentiv-pipeline",
     extra_packages=[
         # best-practices.md is read by _load_best_practices() at local build time
-        # and embedded into the architect instruction — included for reference only.
+        # and embedded into the architect instruction string — no runtime reads.
         "best-practices.md",
-        # ValidatorAgent is a custom BaseAgent subclass defined in app/agents/.
-        # Python pickles it by module path (app.agents.validator_agent), so Agent
-        # Engine must be able to import that module when it unpickles the agent.
-        "backend/app",
     ],
 )
 
